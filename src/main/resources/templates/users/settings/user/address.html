@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마이페이지</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .box {
+      height: 100%;
+    }
+    .form-control {
+      border: none !important;
+      border-bottom: 1px solid #ccc !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+    .btn-dark, .btn-outline-dark {
+      display: inline-block;
+      text-align: center;
+      line-height: 1.5;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      padding: 10px 0;
+      width: 100px;
+    }
+    .btn-dark:hover {
+      background-color: #333;
+    }
+    .address-card {
+      position: relative;
+      border: none;
+      border-radius: 10px;
+      padding: 30px 30px 30px 30px;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 300px; /* 모든 카드의 높이를 동일하게 설정 */
+    }
+
+    .button-group {
+      margin-top: auto;
+      text-align: center;
+    }
+    .address-title {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .close-button {
+      position: absolute; /* 카드 오른쪽 상단에 위치 */
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 1.7rem; /* 크기 2배로 증가 */
+      color: lightgray; /* 기본 색상 회색 */
+      cursor: pointer;
+      transition: color 0.3s ease; /* 색상 전환 효과 */
+      line-height: 1; /* 얇게 설정 */
+      /*padding: 2px 6px;*/
+      font-weight: 120;
+    }
+    .close-button:hover {
+      color: black; /* 호버 시 검은색으로 변경 */
+    }
+    .close-button:hover {
+      color: black; /* 호버 시 색상 변경 */
+    }
+    hr {
+      border: none;
+      border-top: 5px solid black;
+      margin: 20px 0;
+      opacity: 1;
+    }
+    .container-fluid {
+      padding-top: 50px;
+    }
+    body {
+      overflow-y: scroll;
+    }
+    .modal-content {
+      padding: 1.5rem;
+      border-radius: 15px;
+    }
+    .container-fluid {
+      padding-top: 30px; /* 상단 여백 추가 */
+      padding-bottom: 100px;
+    }
+    .address-group {
+      width: 90%; /* form의 너비를 부모 요소의 90%로 설정 */
+      margin: 0 auto; /* form을 가운데 정렬 */
+    }
+    #zipCodeButton {
+      border-radius: 8px; /* 모서리 둥글게 */
+      width: 120px; /* 버튼 가로 길이 설정 */
+    }
+    .hr-custom {
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+
+<body>
+<!--<div th:replace="~{fragment/header.html :: header}"></div>-->
+<div th:insert="~{fragment/header :: header}"></div>
+
+<main>
+<div class="container-fluid">
+
+  <div class="row mt-5 justify-content-center">
+    <div class="col-2 box"></div>
+    <div class="col-8 box">
+      <h2>MY ADDRESSES</h2>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-2 box">
+      <!-- 사이드 네비게이션 -->
+      <div th:replace="fragment/sideNavUser.html :: sideNav (currentMenu='address')"></div>
+    </div>
+
+    <div class="col-8 box">
+      <hr class="hr-custom">
+      <br>
+
+      <div class="address-group">
+        <!-- 배송지 목록 -->
+        <div class="row">
+          <small>* 배송지는 최대 6개까지 등록할 수 있습니다.</small>
+          <br>
+          <br>
+          <div th:each="address : ${allAddress}" class="col-12 col-sm-6 col-md-4 mb-4">
+            <div class="address-card h-100">
+              <div>
+                <span class="address-title" th:text="${address.addressName}">배송지 이름</span>
+              </div>
+              <br>
+              <p th:text="${address.recipient}">받는 사람</p>
+              <p th:text="${address.address}">주소</p>
+              <p th:text="${address.detailAddress}">상세 주소</p>
+              <p th:text="${address.phone}">휴대폰 번호</p>
+              <p th:if="${address.request != null and address.request != ''}" th:text="${address.request}">배송 요청 사항</p>
+              <p th:if="${address.request == null or address.request == ''}">&nbsp;</p>
+              <!-- 수정 및 삭제 버튼 -->
+              <div class="button-group">
+                <!-- 수정 버튼 -->
+                <button class="btn btn-outline-dark"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addAddressModal"
+                        th:attr="data-id=${address.id},
+                 data-name=${address.addressName},
+                 data-recipient=${address.recipient},
+                 data-zipcode=${address.zipCode},
+                 data-address=${address.address},
+                 data-detail=${address.detailAddress},
+                 data-phone=${address.phone},
+                 data-request=${address.request}">
+                  수정
+                </button>
+
+                <!-- 삭제 버튼 -->
+                <form th:action="@{/my-page/address/delete/{addressId}(addressId=${address.id})}" method="post" style="display: inline;">
+<!--                  <button type="submit" class="btn btn-dark">삭제</button>-->
+                  <button type="submit" class="close-button" title="삭제" onclick="if(confirm('정말 삭제하시겠습니까?')) document.getElementById('delete').submit()">&times;</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 배송지 추가 버튼 -->
+        <div class="text-center">
+          <button class="btn btn-dark mt-3 px-5" data-bs-toggle="modal" data-bs-target="#addAddressModal"
+                  th:disabled="${addressCount >= 6}" style="width: 200px;">
+            배송지 추가
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 배송지 추가 모달 -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addAddressModalLabel">배송지 추가</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form th:action="@{/my-page/address/create}" th:object="${request}" method="post" id="addressForm">
+        <div class="modal-body">
+          <input type="hidden" id="addressId" name="id" th:field="*{id}">
+          <div class="mb-3">
+            <label for="addressName" class="form-label">배송지명*</label>
+            <input type="text" class="form-control" id="addressName" th:field="*{addressName}" required>
+            <div class="text-danger" id="addressNameError" style="display: none;">배송지명을 입력하세요.</div>
+          </div>
+          <div class="mb-3">
+            <label for="recipient" class="form-label">받는 분*</label>
+            <input type="text" class="form-control" id="recipient" th:field="*{recipient}" required>
+            <div class="text-danger" id="recipientError" style="display: none;">받는 분을 입력하세요.</div>
+          </div>
+          <div class="mb-3">
+            <label for="zipCode" class="form-label">우편번호*</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="zipCode" th:field="*{zipCode}" readonly="readonly" required>
+              <button type="button" class="btn btn-dark" id="zipCodeButton" onclick="execPostCode();">우편번호 검색</button>
+              <div class="text-danger" id="zipCodeError" style="display: none;">우편번호를 입력하세요.</div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="address" class="form-label">주소*</label>
+            <input type="text" class="form-control" id="address" th:field="*{address}" readonly="readonly" required>
+            <div class="text-danger" id="addressError" style="display: none;">주소를 입력하세요.</div>
+          </div>
+          <div class="mb-3">
+            <label for="detailAddress" class="form-label">상세주소*</label>
+            <input type="text" class="form-control" id="detailAddress" th:field="*{detailAddress}" required>
+            <div class="text-danger" id="detailAddressError" style="display: none;">상세주소를 입력하세요.</div>
+          </div>
+          <div class="mb-3">
+            <label for="phone" class="form-label">휴대폰 번호*</label>
+            <input type="text" class="form-control" id="phone" th:field="*{phone}" required>
+            <div class="text-danger" id="phoneError" style="display: none;">휴대폰 번호를 입력하세요.</div>
+          </div>
+          <div class="mb-3">
+            <label for="deliveryRequest" class="form-label">배송 요청 사항</label>
+            <input type="text" class="form-control" id="deliveryRequest" th:field="*{request}">
+          </div>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-dark">저장</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+</main>
+
+<div th:insert="~{fragment/footer :: footer}"></div>
+
+<script>
+  function execPostCode() {
+    new daum.Postcode({
+      oncomplete: function (data) {
+        var fullRoadAddr = data.roadAddress;
+        var extraRoadAddr = '';
+
+        if (data.bname !== '' && /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]/g.test(data.bname)) {
+          extraRoadAddr += data.bname;
+        }
+        if (data.buildingName !== '' && data.apartment === 'Y') {
+          extraRoadAddr += (extraRoadAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+        }
+        if (extraRoadAddr !== '') {
+          extraRoadAddr = ' (' + extraRoadAddr + ')';
+        }
+        if (fullRoadAddr !== '') {
+          fullRoadAddr += extraRoadAddr;
+        }
+
+        document.getElementById('zipCode').value = data.zonecode;
+        document.getElementById('address').value = fullRoadAddr;
+      }
+    }).open();
+  }
+
+  function validateForm() {
+    let isValid = true;
+
+    const fields = [
+      { id: 'addressName', errorId: 'addressNameError', message: '배송지명을 입력하세요.' },
+      { id: 'recipient', errorId: 'recipientError', message: '받는 분을 입력하세요.' },
+      { id: 'zipCode', errorId: 'zipCodeError', message: '우편번호를 입력하세요.' },
+      { id: 'address', errorId: 'addressError', message: '주소를 입력하세요.' },
+      { id: 'detailAddress', errorId: 'detailAddressError', message: '상세주소를 입력하세요.' },
+      { id: 'phone', errorId: 'phoneError', message: '휴대폰 번호를 입력하세요.' },
+    ];
+
+    fields.forEach(field => {
+      const input = document.getElementById(field.id);
+      const error = document.getElementById(field.errorId);
+
+      if (!input.value.trim()) {
+        error.style.display = 'block';
+        error.textContent = field.message;
+        isValid = false;
+      } else {
+        // 휴대폰 번호 형식 검사 추가
+        if (field.id === 'phone') {
+          const phoneRegex = /^010-\d{4}-\d{4}$/;
+          if (!phoneRegex.test(input.value.trim())) {
+            error.style.display = 'block';
+            error.textContent = '휴대폰 번호는 010-0000-0000 형식이어야 합니다.';
+            isValid = false;
+          } else {
+            error.style.display = 'none';
+          }
+        } else {
+          error.style.display = 'none';
+        }
+      }
+    });
+
+    return isValid;
+  }
+
+  // 폼 제출 시 validateForm 호출
+  document.getElementById('addressForm').addEventListener('submit', function (event) {
+    if (!validateForm()) {
+      event.preventDefault(); // 유효성 검사를 통과하지 못하면 폼 제출 중단
+    }
+  });
+
+  document.getElementById('addAddressModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget; // 이벤트를 트리거한 버튼
+    const modal = this; // 현재 모달
+
+    // 모든 입력 필드 초기화
+    modal.querySelector('#addressName').value = '';
+    modal.querySelector('#recipient').value = '';
+    modal.querySelector('#zipCode').value = '';
+    modal.querySelector('#address').value = '';
+    modal.querySelector('#detailAddress').value = '';
+    modal.querySelector('#phone').value = '';
+    modal.querySelector('#deliveryRequest').value = '';
+
+    // 버튼에 `data-id`가 있는지 확인
+    const id = button.getAttribute('data-id');
+    if (id) {
+      // 수정 모드: 기존 데이터 채우기
+      modal.querySelector('#addressName').value = button.getAttribute('data-name');
+      modal.querySelector('#recipient').value = button.getAttribute('data-recipient');
+      modal.querySelector('#zipCode').value = button.getAttribute('data-zipcode');
+      modal.querySelector('#address').value = button.getAttribute('data-address');
+      modal.querySelector('#detailAddress').value = button.getAttribute('data-detail');
+      modal.querySelector('#phone').value = button.getAttribute('data-phone');
+      modal.querySelector('#deliveryRequest').value = button.getAttribute('data-request');
+
+      // 숨겨진 필드에 ID 값 설정
+      modal.querySelector('#addressId').value = id;
+    } else {
+      // 추가 모드: 입력 필드 초기화 상태 유지
+      modal.querySelector('#addressId').value = ''; // 숨겨진 필드 초기화
+    }
+
+    // form의 action 경로는 항상 통합된 경로로 설정
+    modal.querySelector('form').setAttribute('action', '/my-page/address/create-or-update');
+  });
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!--<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>-->
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+</body>
+</html>

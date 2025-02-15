@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    
+    h3, h4, h5 {
+        text-align: center;
+    }
+    
+     form {
+        width: 100%;
+        margin: 0 auto;
+    } 
+    
+    label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    input, textarea, select {
+        display: block;
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    
+    input[type="file"] {
+        display: none;
+    }
+    
+    .btn-outline-dark {
+        background-color: #f0f0f0; 
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 14px; 
+        cursor: pointer;
+    }
+
+    .btn-outline-dark:hover {
+        background-color: #e0e0e0; 
+    }
+
+    .file-info {
+        display: inline-block; /* 버튼과 같은 줄에 표시 */
+        margin-left: 10px; 
+        vertical-align: middle; 
+        font-size: 14px;
+        color: #555;
+    }
+    
+    .modal-hr {
+        border: none;
+        border-top: 3px solid #ccc;
+        width: 40%; 
+        margin: 20px auto; 
+        padding-bottom: 20px;
+    }
+
+    .text-danger {
+        font-size: 15px;
+        font-weight: bold;
+        color: red;
+    }
+    
+    .hide {
+    	display: none;
+    }
+    
+    .modal-btn {
+        display: block;
+        margin: 20px auto;
+        width: auto;
+        padding: 10px 15px;
+    }
+    
+    .select-cate {
+    	width: 20%;
+    	margin-bottom: 30px;
+    }
+    
+    .text-sm {
+    	font-size:14px;
+    	font-weight: bold;
+    	color: #333;
+    }
+    
+    .input-product {
+    	width: 50%;
+    	margin: 30px auto;
+    }    
+    
+    .update-form {
+        display: inline-block;
+        text-align: left;
+        width: 100%;
+    }
+    
+</style>
+
+</head>
+<body>
+
+<h3>상품 수정</h3>
+<h4>ID: <span th:text="${product.id}"></span></h4>
+<hr class="modal-hr">
+
+<form id="productForm" th:action="@{/admin/product/update}" th:object="${requestDto}" method="post" enctype="multipart/form-data">
+    <input type="hidden" id="id" name="id" th:value="${product.id}">
+
+    <!-- 펫 타입 -->
+    <div class="mb-3">
+       <h5>
+       	   <span>펫 타입: </span>
+           <span id="categoryType" name="petType" th:text="${product.petType}"></span>
+       </h5>
+    </div>
+    
+<div class="update-form">    
+    
+		<input type="hidden" id="categoryId" name="categoryId" th:value="${product.categoryId}">
+    
+    
+    <div class="input-product">
+    <!-- 세부 카테고리 -->
+    <div class="select-cate">
+   		<div class="mb-3">
+        <label for="subCategory" class="form-label text-sm">세부 카테고리</label>
+		<select id="subCategory" name="subCategory" required onchange="changeCategory(this)" >
+			<option value="" disabled >세부 카테고리를 선택하세요</option>
+    		<option th:each="category, idx : ${product.petType} == 'DOG' ? ${dogCategories} : ${catCategories}" th:value="${category.id}" th:text="${category.name}" th:selected="${category.id} == ${product.categoryId}"></option>
+		</select>
+		</div>
+    </div>
+    <div class="info">
+	    <div class="mb-3">
+	        <label for="title" class="form-label text-sm">상품 이름</label>
+	        <input type="text" th:field="${product.title}" placeholder="상품명을 입력하세요" required>
+	        <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['product.title'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['product.title'] != null ? fieldErrors['product.title'] : ''}"></div>
+	    </div>    
+	
+	    <div class="mb-3">
+	        <label for="detail" class="form-label text-sm">상품 설명</label>
+	        <textarea id="detail" th:field="${product.detail}" placeholder="상품 설명을 입력하세요" required></textarea>
+	        <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['product.detail'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['product.detail'] != null ? fieldErrors['product.detail'] : ''}"></div>
+	    </div>
+	    
+	    <div class="mb-3">
+	        <label for="price" class="form-label text-sm">상품 가격</label>
+	        <input type="number" th:field="${product.price}" placeholder="상품 가격을 입력하세요" required>
+	        <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['product.price'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['product.price'] != null ? fieldErrors['product.price'] : ''}"></div>
+	    </div>    
+	
+	    <div class="mb-3">
+	        <label for="count" class="form-label text-sm">상품 재고 수량</label>
+	        <input type="number" id="count" th:field="${product.count}" placeholder="상품 재고 수량을 입력하세요" required>
+	        <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['product.count'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['product.count'] != null ? fieldErrors['product.count'] : ''}"></div>
+	        
+	        
+	    </div>
+    </div>
+    <!-- 대표 이미지 -->
+    <div class="mb-3">
+        <label for="file" class="form-label text-sm">대표 이미지 선택</label>
+        <br>
+            <button id="openFileBtn" class="btn-outline-dark btn-sm" type="button" onclick="openFile()" >파일 선택</button>
+            <input type="file"  name ="file" id="file" accept="image/png, image/jpeg" style="display: none;">
+            <!-- 기존에 선택된 사진이 있다면 그 파일의 이름을 보여줌 -->
+            <span id="fileName" th:text="${product.reqImage != null} ?  ${#strings.substringAfter(product.reqImage, '_')} : '선택된 파일이 없습니다.'"></span><br>
+       		<div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['product.file'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['product.file'] != null ? fieldErrors['product.file'] : ''}"></div>
+    </div>
+    </div>
+</div>
+
+    <div>
+        <button type="submit" class="btn btn-dark modal-btn">수정</button>
+    </div>
+</form>
+
+<script id="modalScript" type="text/javascript" th:inline="javascript">
+	 
+ 	
+ 	function changeCategory(node) {
+ 		const options = node.options;
+ 		const selectedOption = options[node.selectedIndex];
+ 		
+ 		document.getElementById('categoryId').value = selectedOption.value;
+
+ 	}
+
+    // 파일창 열기
+    function openFile() {
+        document.getElementById("file").click();
+    }
+
+     // 파일 선택 시 유효성 검사
+    document.getElementById("file").addEventListener("change", function () {
+        validateFile(this);
+        
+    });    
+    
+    
+     var MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    var ALLOWED_FILE_TYPES = ["image/png", "image/jpeg"];
+    var previousFileName = document.getElementById("fileName").innerText;
+
+    // 파일 유효성 검사
+    function validateFile(input) {
+        const file = input.files[0]; // 선택된 파일 가져오기
+
+        if (!file) {
+            return; // 파일이 선택되지 않은 경우 종료
+        }
+
+        const errors = [];
+
+        // 파일 크기 검사
+        if (file.size > MAX_FILE_SIZE) {
+            errors.push("파일 크기가 5MB를 초과합니다.");
+        }
+
+        // 파일 형식 검사
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            errors.push("파일 형식은 png, jpeg만 가능합니다.");
+        }
+
+        // 오류가 있을 경우
+        if (errors.length > 0) {
+            alert(errors.join("\n")); // 오류 메시지 표시
+            input.value = ""; // 입력된 파일 초기화
+            document.getElementById("fileName").innerText = previousFileName;  // 기존 이름 가져오기
+        } else {
+            document.getElementById("fileName").innerText = file.name; 
+        }
+    } 
+    
+    
+	// 필드 동적 유효성 검사
+	function validateField(evt, input) {
+
+	    const value = input.value.trim();
+	    const name = input.name;
+
+	    const errorDiv = input.nextElementSibling;
+
+	    if (name === 'title' || name === 'detail') {
+	        // 옵션명, 상품명, 설명 - 공백 검사
+	        if (value === '') {
+	        	input.value = input.value.substring(0, input.selectionStart - 1);
+	        	errorDiv.classList.remove('hide');
+	            errorDiv.innerText = '값을 입력해 주세요.';
+	            input.classList.add('is-invalid');
+	            
+	        } else {
+	        	errorDiv.classList.add('hide');
+	            errorDiv.innerText = '';
+	            input.classList.remove('is-invalid');
+	        }
+	    } 
+	    else if (name === 'price' || name === 'count') {
+	        // 가격, 수량 - 0 또는 양수 검사
+	        if (!/^\d+$/.test(value) || parseInt(value) < 0) {
+
+	        	errorDiv.classList.remove('hide');
+	            errorDiv.innerText = '양수로 입력해 주세요.';
+	            input.classList.add('is-invalid');
+	        } else {
+	        	errorDiv.classList.add('hide');
+	            errorDiv.innerText = '';
+	            input.classList.remove('is-invalid');
+	        }
+	    }
+	}
+
+	// input 입력 시 유효성 검사
+	document.addEventListener('input', (e) => {
+	    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+	        validateField(e, e.target);
+	    }
+	});	
+    
+
+     // 폼 전송
+    document.querySelector('#productForm').addEventListener('submit', function (e) {
+    			
+    	e.preventDefault();
+		
+        const form = e.target;
+        const formData = new FormData(form);
+			    
+        
+	    fetch(form.action, {
+	        method: form.method,
+	        body: formData
+	    }).then(response => {
+	        if (response.ok) {
+	            alert("등록이 완료되었습니다!");
+	            window.location.href = "/admin/product";
+
+	        } else {
+	      		alert("등록 중 오류가 발생했습니다.");
+	      		return response.text();
+	        }
+	    }).then(html => {
+
+	    	if (html) {
+	    	
+	    		const parser = new DOMParser();
+	    		const doc = parser.parseFromString(html, 'text/html');
+	    		
+	    		const infoDiv = doc.querySelector('.info').querySelectorAll('.text-danger');
+	    		let prevInfoDiv = document.querySelector('.info').querySelectorAll('.text-danger');
+	    		
+	    		for (let i = 0; i < infoDiv.length; i++) {
+	    			if (infoDiv[i].classList.value.indexOf('hide') == -1) {
+	    				prevInfoDiv[i].parentNode.replaceChild(infoDiv[i], prevInfoDiv[i]);
+	    			}
+	    		}
+	    	}
+	    	
+	    }).catch(error => {
+	        console.error("전송 오류:", error);
+	        alert("서버와의 통신 중 문제가 발생했습니다.");
+	    });
+	});
+
+
+</script>
+
+
+</body>
+</html>

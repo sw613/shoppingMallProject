@@ -1,0 +1,55 @@
+/* 로고 스타일 */
+.logo {
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+    font-size: 1.5rem;
+    color: #000;
+    text-decoration: none;
+}
+
+.logo-header-img {
+    width: 12%;
+    height: auto;
+    max-width: 100%;
+    padding-left: 15px;
+}
+
+.logo-footer-img {
+    width: 40%;
+    height: auto;
+    max-width: 100%;
+}
+
+/* 카테고리 스타일 */
+.category {
+    font-weight: 500;
+    font-family: 'Arial', sans-serif;
+    font-size: 1.2rem;
+    color: #000;
+    text-decoration: none;
+}
+
+/* 로그인/로그아웃/관리자 페이지 스타일 */
+.small-menu {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: #666;
+    text-decoration: none;
+}
+
+/* 호버 스타일 */
+a:hover {
+    color: #333;
+    text-decoration: underline;
+}
+
+
+.header-con {
+    height: 140px;
+}
+
+.header-sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}

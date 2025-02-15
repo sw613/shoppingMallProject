@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 상세</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+        }
+
+        .side-nav {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+        }
+
+        .side-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .side-nav ul li {
+            margin-bottom: 10px;
+        }
+
+        .side-nav ul li a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .side-nav ul li a:hover,
+        .side-nav ul li.active a {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        main {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #007bff;
+        }
+
+        .product-image {
+            width: 50px;
+            height: auto;
+        }
+
+        .btn-back {
+            display: block;
+            width: fit-content;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .btn-back:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragment/header :: header}"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 side-nav">
+            <ul>
+                <li th:classappend="${currentMenu == 'orders'} ? 'active' : ''">
+                    <a href="/view/payment/ordersListAdmin">주문 목록</a>
+                </li>
+                <li th:classappend="${currentMenu == 'products'} ? 'active' : ''">
+                    <a href="/view/product/manage">상품 관리</a>
+                </li>
+                <li th:classappend="${currentMenu == 'users'} ? 'active' : ''">
+                    <a href="/view/user/manage">회원 관리</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="col-md-9">
+            <main>
+                <h1>주문 상세 페이지</h1>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                    <tr>
+                        <th>상품 이미지</th>
+                        <th>상품명</th>
+                        <th>가격</th>
+                        <th>수량</th>
+                        <th>주문 상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${productDtoList}">
+                        <td>
+                            <img th:src="${product.image != null ? 'https://prj2.s3.ap-northeast-2.amazonaws.com/' + product.image : '/images/default.png'}"
+                                 alt="상품 이미지" class="product-image">
+                        </td>
+                        <td th:text="${product.productName != null ? product.productName : '상품명 없음'}"></td>
+                        <td class="price" th:attr="data-raw-price=${product.price}" th:text="${product.price}"></td>
+                        <td th:text="${product.count != null ? product.count : '0'}"></td>
+                        <td>
+                            <select class="form-select status-select" th:attr="data-product-id=${product.productOrderId}">
+                                <option value="주문완료" th:selected="${product.orderStatus.toString() == '주문완료'}">주문완료</option>
+                                <option value="배송준비중" th:selected="${product.orderStatus.toString() == '배송준비중'}">배송준비중</option>
+                                <option value="배송중" th:selected="${product.orderStatus.toString() == '배송중'}">배송중</option>
+                                <option value="배송완료" th:selected="${product.orderStatus.toString() == '배송완료'}">배송완료</option>
+                                <option value="주문취소" th:selected="${product.orderStatus.toString() == '주문취소'}">주문취소</option>
+                            </select>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <a href="/view/payment/ordersListAdmin" class="btn-back">← 주문 목록으로 돌아가기</a>
+            </main>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragment/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".price").forEach((priceElement) => {
+            const rawPrice = parseInt(priceElement.getAttribute("data-raw-price"), 10);
+            if (!isNaN(rawPrice)) {
+                priceElement.textContent = rawPrice.toLocaleString("ko-KR") + "원";
+            }
+        });
+    });
+
+
+    document.querySelectorAll(".status-select").forEach(select => {
+        select.addEventListener("change", async (e) => {
+            const productId = e.target.dataset.productId;
+            const newState = e.target.value;
+
+            const requestData = {
+                orderProductId: productId,
+                isState: newState
+            };
+
+            try {
+                const response = await fetch("/api/orders/product/stateEdit", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    alert(`상품 ID ${productId} 상태가 '${newState}'(으)로 변경되었습니다.`);
+                } else {
+                    alert("상태 변경 실패. 다시 시도해주세요.");
+                }
+            } catch (error) {
+                alert("오류가 발생했습니다. 다시 시도해주세요.");
+            }
+        });
+    });
+</script>
+</body>
+</html>

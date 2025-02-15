@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마이페이지</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome -->
+  <script src="https://kit.fontawesome.com/4b7607ba59.js" crossorigin="anonymous"></script>
+  <style>
+    .box {
+      height: 100%;
+    }
+    label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: gray;
+    }
+    .form-control {
+      border: none !important;
+      border-bottom: 1px solid #ccc !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+    .form-control:focus {
+      border-bottom: 1px solid black !important;
+      box-shadow: none !important;
+    }
+    .btn-dark {
+      display: inline-block;
+      text-align: center;
+      line-height: 1.5;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      border: none;
+      background-color: black;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .btn-dark:hover {
+      background-color: #333;
+    }
+    .btn-disabled {
+      background-color: #d3d3d3 !important;
+      color: #8c8c8c !important;
+      cursor: not-allowed !important;
+      pointer-events: none;
+    }
+    .btn-save {
+      background-color: #ff5100 !important;
+      color: white !important;
+    }
+    form {
+      width: 90%;
+      margin: 0 auto;
+    }
+    .alert {
+      width: 90%;
+      margin: 0 auto;
+    }
+    hr {
+      border: none;
+      border-top: 5px solid black;
+      margin: 20px 0;
+      opacity: 1;
+    }
+    .container-fluid {
+      padding-top: 30px; /* 상단 여백 추가 */
+    }
+    body {
+      overflow-y: scroll; /* 수직 스크롤바 항상 표시 */
+    }
+    .main {
+      margin-bottom: 150px;
+    }
+    .hr-custom {
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div th:insert="~{fragment/header :: header}"></div>
+
+<main class="main">
+<div class="container-fluid">
+  <div class="row mt-5 justify-content-center">
+    <div class="col-2 box"></div>
+    <div class="col-8 box">
+      <h2>MY INFO</h2>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-2 box">
+      <div th:replace="fragment/sideNavAdmin.html :: sideNav (currentMenu='info')"></div>
+    </div>
+    <div class="col-8 box">
+      <hr class="hr-custom">
+      <br>
+      <!-- 성공 메시지 표시 -->
+      <div class="alert alert-info alert-dismissible fade show mt-3" role="alert" th:if="${message}">
+        <span th:text="${message}">완료</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+
+      <br>
+      <form id="userForm" th:object="${request}" th:action="@{/my-page}" method="post">
+        <!-- 이메일 -->
+        <div class="mb-4 d-flex align-items-center">
+          <div class="flex-grow-1">
+            <label for="email">이메일/아이디</label>
+            <input type="text" id="email" class="form-control" th:field="*{email}" readonly>
+          </div>
+          <button type="button"
+                  class="btn-dark ms-3"
+                  th:classappend="${request.isEmailVerified()} ? 'btn-disabled' : ''"
+                  th:disabled="${request.isEmailVerified()}"
+                  th:text="${request.isEmailVerified()} ? '인증 완료' : '인증'"
+                  onclick="checkEmailLogin()">
+          </button>
+        </div>
+
+        <!-- 이름 -->
+        <div class="mb-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <label for="username">이름</label>
+              <input type="text" id="username" class="form-control" th:field="*{username}" readonly>
+            </div>
+            <button type="button" id="usernameButton" class="btn-dark ms-3" onclick="toggleInputAndSubmit('username', this, '/my-page/update-username')">변경</button>
+          </div>
+          <!-- 설명 텍스트 -->
+          <div class="mt-2">
+            <small id="usernameHelp" class="form-text text-muted">
+              공백없이 문자와 숫자로만 3자 이상 10자 이내
+            </small>
+          </div>
+          <!-- 유효성 검사 에러 메시지 -->
+          <small id="usernameError" class="form-text text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Username Error</small>
+        </div>
+
+        <!-- 핸드폰 번호 -->
+        <div class="mb-4">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <label for="phoneNumber">핸드폰 번호</label>
+              <input type="text" id="phoneNumber" class="form-control" th:field="*{phoneNumber}" placeholder="핸드폰 번호를 입력해주세요" readonly>
+            </div>
+            <button type="button" id="phoneNumberButton" class="btn-dark ms-3" onclick="validateAndSubmitPhoneNumber()">변경</button>
+          </div>
+          <!-- 설명 텍스트 -->
+          <div class="mt-2">
+            <small id="phoneNumberHelp" class="form-text text-muted">
+              ex) 010-1234-5678
+            </small>
+          </div>
+          <!-- 유효성 검사 에러 메시지 -->
+          <small id="phoneNumberError" class="form-text text-danger" style="display: none;">올바른 형식이 아닙니다.</small>
+        </div>
+
+        <!-- 가입일 -->
+        <div class="mb-4">
+          <label for="atCreate">가입일</label>
+          <input type="text" id="atCreate" class="form-control" th:field="*{atCreate}" readonly>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</main>
+
+<div th:insert="~{fragment/footer :: footer}"></div>
+
+<script>
+  function checkEmailLogin() {
+    window.location.href = '/check-email-login';
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // username 필드에 에러가 있는 경우 처리
+    const usernameError = document.getElementById("usernameError");
+    const usernameInput = document.getElementById("username");
+    const usernameButton = document.getElementById("usernameButton");
+
+    if (usernameError) {
+      usernameInput.removeAttribute("readonly"); // 입력 가능하게 설정
+      usernameButton.textContent = "저장"; // 버튼 텍스트 변경
+      usernameButton.classList.add("btn-save"); // 저장 버튼 스타일 추가
+    }
+  });
+
+  function toggleInputAndSubmit(inputId, button, actionPath) {
+    const input = document.getElementById(inputId);
+    const form = document.getElementById("userForm");
+
+    if (!input || !button) {
+      console.error("Input or button not found!");
+      return;
+    }
+
+    if (input.hasAttribute("readonly")) {
+      // Enable input and change button text to "저장"
+      input.removeAttribute("readonly");
+      input.focus();
+      button.textContent = "저장";
+      button.classList.add("btn-save");
+    } else {
+      // Disable input and change button text to "변경"
+      input.setAttribute("readonly", true);
+      button.textContent = "변경";
+      button.classList.remove("btn-save");
+
+      // Submit the form with updated action
+      form.action = actionPath;
+      form.submit();
+    }
+  }
+
+  function validateAndSubmitPhoneNumber() {
+    const phoneNumberInput = document.getElementById("phoneNumber");
+    const phoneNumberButton = document.getElementById("phoneNumberButton");
+    const phoneNumberError = document.getElementById("phoneNumberError");
+    const form = document.getElementById("userForm");
+
+    const phoneRegex = /^010-\d{4}-\d{4}$/; // 핸드폰 번호 형식 정규식
+
+    if (phoneNumberInput.hasAttribute("readonly")) {
+      // 입력 필드 활성화 및 버튼 변경
+      phoneNumberInput.removeAttribute("readonly");
+      phoneNumberInput.focus();
+      phoneNumberButton.textContent = "저장";
+      phoneNumberButton.classList.add("btn-save");
+    } else {
+      // 형식 검증
+      if (!phoneRegex.test(phoneNumberInput.value)) {
+        phoneNumberError.style.display = "block"; // 에러 메시지 표시
+        return;
+      }
+
+      // 검증 통과 시 폼 제출
+      phoneNumberError.style.display = "none"; // 에러 메시지 숨기기
+      phoneNumberInput.setAttribute("readonly", true);
+      phoneNumberButton.textContent = "변경";
+      phoneNumberButton.classList.remove("btn-save");
+
+      // 업데이트 요청
+      form.action = "/my-page/update-phone-number";
+      form.submit();
+    }
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

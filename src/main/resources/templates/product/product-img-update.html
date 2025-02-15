@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+
+    h3, h4 {
+        text-align: center;
+    }
+
+    form {
+        width: 100%; 
+        margin: 0 auto;
+        text-align: center; 
+    }
+
+    table {
+        margin: 20px auto; 
+        width: 70%; 
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #f8f8f8;
+    }
+
+    button {
+        background-color: #333;
+        color: white;
+        border: none;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    button:hover {
+        background-color: #555;
+    }
+
+    .modal-hr {
+        border: none;
+        border-top: 3px solid #ccc;
+        width: 40%; 
+        margin: 20px auto; 
+        padding-bottom: 20px;
+    }
+
+    .btn-outline-dark {
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .btn-outline-dark:hover {
+        background-color: #e0e0e0;
+    }
+
+    .modal-btn {
+        display: block;
+        margin: 40px auto;
+        width: auto;
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+    
+</style>
+</head>
+<body>
+
+<h3>상품 디테일 사진 수정</h3>
+<h4>상품 ID: <span th:text="${productId}"></span></h4>
+<hr class="modal-hr">
+<br>
+
+<form id="detailForm" th:action="@{/admin/productImg/update}" th:object="${requestDto}" method="post" enctype="multipart/form-data">
+    <input type="hidden" id="productId" name="productId" th:value="${productId}">
+    
+    <label for="detailFile">이미지 추가</label>
+    <button type="button" class="btn-outline-dark btn-sm" onclick="clickFile()">파일 선택</button>
+    
+    <div>       
+        <table border="1" id="ProductImgTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>선택된 이미지</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody id="ImgTBody">
+                <tr th:each="image, start : ${images}" th:data-img-num="${start.index+1}">
+                    <td th:text="${start.index + 1}"></td>
+                    <td th:text="${#strings.substringAfter(image.url, '_')}"></td>
+                    <td>
+                        <!-- <button type="button" class="btn btn-outline-danger btn-sm"  th:data-img-num="${start.index+1}" th:onclick="deleteDetailImg([[${start.index+1}]])">삭제</button> -->
+                        <button type="button" class="btn btn-outline-danger btn-sm"  th:data-img-num="${start.index+1}" th:onclick="deleteDetailImg(this)">삭제</button>
+                    </td>
+                </tr>
+                <tr id="isEmpty" th:if="${images.isEmpty()}">
+                    <td colspan="3">추가된 사진이 없습니다.</td>
+                </tr>
+            </tbody>
+        </table>   
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-dark modal-btn">수정</button>
+    </div>
+</form>
+
+<!-- 숨겨진 파일 선택 input -->
+<input style="display:none;" type="file" name="detailFile" id="detailFile" accept="image/png, image/jpeg" multiple onchange="addDetailFile(this);" />
+
+<script id="modalScript" type="text/javascript" th:inline="javascript">
+	
+	// let -> var  로 변경 (재할당 안됨.)
+	var images =[];       // controller로 보낼 다중 파일 배열
+	var deletedImages = []; // 기존 이미지 중 삭제된 URL 관리
+	var imgTableRows =[];  // 테이블에 보여질 데이터
+	var imgNum = 0;   // 테이블에 보여질 이미지 번호
+	
+	//...
+	
+	
+    // 초기 데이터 렌더링
+	[[${images}]].forEach((image, index) => {
+		imgNum++;
+        images.push({ url: image.url, isExisting: true, file: null });   // 기존 업로드된 파일인지 구분
+        
+        imgTableRows.push({
+            imgNum: index + 1,
+            fileName: image.url.split('_').pop()
+        });
+    });
+    
+
+    // 파일 선택 버튼
+    function clickFile() {
+        document.getElementById("detailFile").click();
+    };
+
+    // 파일 추가
+    function addDetailFile(input) {
+
+    	const errors = validateDetailFiles(input);
+
+        if (errors.length > 0) {
+            alert(errors.join("\n"));
+            input.value = ""; 
+            return;
+        }
+	
+        const files = Array.from(input.files);
+        files.forEach(file => {
+            images.push({url: null, isExisting: false, file: file});
+         
+            
+            imgTableRows.push({
+                imgNum: ++imgNum,
+                fileName: file.name
+            });
+
+            updateDetailImgTable({type: 'add', imgNum: imgNum, fileName: file.name});
+        });
+        
+        input.value = ""; 
+    }
+
+    // 테이블 업데이트
+    function updateDetailImgTable(paramObj) {
+        const imgTbody = document.getElementById("ImgTBody");
+      
+        if (imgTableRows.length > 0 && document.getElementById("isEmpty")) {
+        	document.getElementById("isEmpty").parentNode.removeChild(document.getElementById("isEmpty"));
+        }
+        let imgNum;
+        let fileName;
+        switch (paramObj.type) {
+        	case 'add':
+        		imgNum = paramObj.imgNum;
+        		fileName = paramObj.fileName;
+        		const row = `
+                    <tr data-img-num="${imgNum}">
+                        <td>${imgNum}</td>
+                        <td>${fileName}</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-danger btn-sm" data-img-num="${imgNum}" onclick="deleteDetailImg(this)">삭제</button>
+                        </td>
+                    </tr>`;
+                let newImg = document.createElement('tr');
+                imgTbody.appendChild(newImg);
+                newImg.outerHTML = row;
+        		break;
+        	case 'delete':
+        		imgNum = paramObj.imgNum.toString();
+        		let _images = document.querySelectorAll('tr[data-img-num]');
+        		let needChange = false;
+        		let deleteIdx = 0;
+        		for (let i = 0; i < _images.length; i++) {
+        			if (_images[i].dataset.imgNum == imgNum && !needChange) {
+        				_images[i].parentNode.removeChild(_images[i]);
+        				needChange = true;
+        				deleteIdx = i;
+        				
+        				//imgTableRows[i].imgNum -= 1;
+        				continue;
+        			}
+        			if (needChange) {
+        				imgTableRows[i].imgNum -= 1;
+        				_images[i].dataset.imgNum = parseInt(_images[i].dataset.imgNum) - 1;
+        				_images[i].firstElementChild.innerHTML = parseInt(_images[i].firstElementChild.innerHTML) - 1;
+        				
+        			}
+        		}
+        		imgTableRows.splice(deleteIdx, 1);
+        		break;
+        		
+        }
+        if (imgTableRows.length === 0) {
+            imgTbody.innerHTML = '<tr id="isEmpty"><td colspan="3">추가된 사진이 없습니다.</td></tr>';
+        }
+        
+    }
+    
+    
+    // 유효성 검사
+    function validateDetailFiles(input) {
+        const files = input.files;
+        const errors = [];
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        const ALLOWED_FILE_TYPES = ["image/png", "image/jpeg"];
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.size > MAX_FILE_SIZE) {
+                errors.push("파일 크기가 5MB를 초과합니다.");
+            }
+            if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                errors.push("파일 형식은 png, jpeg만 가능합니다.");
+            }
+        }
+        return errors;
+    }
+
+	// 이미지 삭제
+    function deleteDetailImg(e) {
+		let _imgNum = e.parentNode.parentNode.dataset.imgNum;
+        const index = imgTableRows.findIndex(row => row.imgNum == _imgNum);
+       --imgNum;
+        //debugger;
+        if (index !== -1) {
+            const image = images[index];
+            if (image.isExisting) {
+                // 삭제된 이미지 배열에 담기
+                deletedImages.push(image.url);
+            }
+         	// 새로 추가된 이미지는 배열에서 제거
+            images.splice(index, 1);
+            //imgTableRows.splice(index, 1);
+            updateDetailImgTable({type:'delete', imgNum: _imgNum});
+        }
+    }	
+	
+    // 폼 전송
+    document.querySelector('#detailForm').addEventListener('submit', function (e) {
+		
+    	e.preventDefault();
+		
+        const form = e.target;
+        const formData = new FormData(form);
+		
+        if (images.length === 0) {
+            alert("상품 디테일 이미지는 필수 입니다.");
+            return;
+        }
+        
+        deletedImages.forEach(deletedImage => {
+        	formData.append("deletedImages", deletedImage); // 삭제할 이미지 url
+
+        });
+        
+        images.forEach(image => {
+            if (!image.isExisting) {
+            	formData.append("detailFile", image.file);
+
+            }
+        });
+		
+        fetch(form.action, {
+            method: form.method,
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                alert("수정이 완료되었습니다!");
+                window.location.href = "/admin/product";
+            } else {
+                alert("수정 중 오류가 발생했습니다.");
+            }
+        }).catch(error => {
+            console.error("전송 오류:", error);
+        });
+    });
+
+</script>
+</body>
+</html>

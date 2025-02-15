@@ -1,0 +1,94 @@
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 가로 방향 중앙 정렬 */
+    justify-content: center; /* 세로 방향 중앙 정렬 */
+}
+
+.rate {
+    border: 0;
+    /*margin-top: 20px; !* 위쪽 여백 추가 *!*/
+    /*display: flex; !* 가로 정렬 *!*/
+    justify-content: center; /* 가로 방향 중앙 정렬 */
+    align-items: center; /* 세로 방향 중앙 정렬 */
+    float: left;
+}
+
+.rate > input {
+    display: none;
+}
+
+.rate > label {
+    float: right; /* float 해제 */
+    color: #ddd !important;
+}
+
+.rate > label:before {
+    display: inline-block;
+    font-size: 1rem;
+    padding: .3rem .2rem;
+    margin: 0;
+    cursor: pointer;
+    font-family: "Font Awesome 5 Free";
+    content: "\f005 ";
+    font-weight: 900;
+}
+
+.rate .half:before {
+    content: "\f089 ";
+    position: absolute;
+    padding-right: 0;
+}
+
+.rate input:checked ~ label,
+.rate label:hover, .rate label:hover ~ label {
+    color: #f73c32 !important;
+}
+
+.rate input:checked + .rate label:hover,
+.rate input input:checked ~ label:hover,
+.rate input:checked ~ .rate label:hover ~ label,
+.rate label:hover ~ input:checked ~ label {
+    color: #f73c32 !important;
+}
+
+
+/* 별점 표시 */
+/*.rating-display {*/
+/*    font-size: 1.5rem; !* 별 크기 *!*/
+/*    color: #f73c32; !* 활성화된 별 색상 *!*/
+/*    letter-spacing: 0.1rem; !* 별 간격 *!*/
+/*}*/
+
+.rating-display {
+    font-size: 1.5rem; /* 별 크기 */
+    color: #f73c32; /* 활성화된 별 색상 */
+    letter-spacing: 0.1rem; /* 별 간격 */
+    display: flex;
+}
+
+.star {
+    position: relative;
+    display: inline-block;
+    color: #ddd; /* 비활성 별 색상 */
+}
+
+.star.full {
+    color: #f73c32; /* 활성 별 색상 */
+}
+
+.star.half {
+    color: #ddd; /* 비활성 별 색상 */
+    overflow: hidden;
+}
+
+.star.half::before {
+    content: '★';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 47%; /* 반쪽 크기 */
+    color: #f73c32; /* 활성화된 반쪽 별 색상 */
+    overflow: hidden;
+}

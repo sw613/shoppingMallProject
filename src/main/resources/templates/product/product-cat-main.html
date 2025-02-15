@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/productStyle.css}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:insert="~{fragment/header :: header}"></div>
+
+<main class="container mt-4">
+	<hr>
+        <!-- 카테고리 선택 -->
+        <div class="category-list">
+            <a th:each="category : ${catCategories}" 
+               th:href="@{/product/cat(categoryId=${category.id}, sort=${selectedSort})}"
+               th:text="${category.name}"
+               th:classappend="${selectedCategoryId == category.id} ? 'selected' : ''"></a>
+        </div>
+	<hr>
+	
+        <!-- 정렬 옵션 -->
+		<div class="d-flex justify-content-end sort-options">
+    		<select id="sortSelect" class="form-select" onchange="onSortChange(this)">
+        		<option value="new" th:selected="${selectedSort == 'new'}">신상품</option>
+        		<option value="popular" th:selected="${selectedSort == 'popular'}">인기순</option>
+        		<option value="highPrice" th:selected="${selectedSort == 'highPrice'}">높은 가격순</option>
+        		<option value="lowPrice" th:selected="${selectedSort == 'lowPrice'}">낮은 가격순</option>
+    		</select>
+		</div>
+
+    <!-- 상품 목록 -->
+    <div class="row row-cols-3 row-cols-md-4 g-4">
+        <div class="col-md-3" th:each="product : ${catProducts}">
+            <div class="card h-100">
+                <a th:href="@{/product/{id}(id=${product.id})}">
+                    <img th:src="@{${product.reqImage}}" class="img-fluid rounded">
+                </a>
+                <div class="card-body text-center">
+                    <h5 class="card-title" th:text="${product.title}"></h5>
+                    <p class="text-muted price" th:attr="data-price=${product.price}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 페이지네이션 -->
+	<nav aria-label="Page navigation example" class="mt-4">
+    	<ul class="pagination justify-content-center">
+        	<!-- 이전 화살표 -->
+        	<li class="page-item">
+            	<a class="page-link" 
+               		th:href="@{/product/cat(page=${catProducts.number - 1}, sort=${selectedSort}, categoryId=${selectedCategoryId})}" 
+               		th:classappend="${!catProducts.hasPrevious()} ? 'disabled' : ''">&laquo;</a>
+        	</li>
+        
+        	<!-- 페이지 번호 -->
+        	<li class="page-item" th:each="pageNum : ${#numbers.sequence(0, catProducts.totalPages > 0 ? catProducts.totalPages - 1 : 0)}">
+            	<a class="page-link" th:text="${pageNum + 1}" 
+               		th:href="@{/product/cat(page=${pageNum}, sort=${selectedSort}, categoryId=${selectedCategoryId})}" 
+               		th:classappend="${catProducts.number == pageNum} ? 'active' : ''"></a>
+        	</li>
+        
+        	<!-- 다음 화살표 -->
+        	<li class="page-item">
+            	<a class="page-link" 
+               		th:href="@{/product/cat(page=${catProducts.number + 1}, sort=${selectedSort}, categoryId=${selectedCategoryId})}" 
+               		th:classappend="${!catProducts.hasNext()} ? 'disabled' : ''">&raquo;</a>
+        	</li>
+    	</ul>
+	</nav>
+</main>
+
+<div th:insert="~{fragment/footer :: footer}"></div>
+
+<script th:inline="javascript">
+    
+    function onSortChange(select) {
+        const selectedSort = select.value;
+        const categoryId = [[${selectedCategoryId}]] || '';
+        const url = categoryId ? `/product/cat?sort=${selectedSort}&categoryId=${categoryId}`: `/product/cat?sort=${selectedSort}`;
+        
+        location.href = url;
+    }
+    
+    // 가격에 콤마 붙이기
+    document.addEventListener('DOMContentLoaded', () => {
+        const priceElements = document.querySelectorAll('.price');
+
+        priceElements.forEach(element => {
+            const price = parseFloat(element.getAttribute('data-price'));
+            
+            if (!isNaN(price)) {
+                // 세 자리마다 콤마 추가 및 '원' 단위 붙이기
+                element.textContent = price.toLocaleString('ko-KR') + '원';
+            } 
+        });
+    });    
+    
+</script>
+
+</body>
+</html>

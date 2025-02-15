@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
+    <link rel="stylesheet" th:href="@{/css/homeStyle.css}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+
+	<!--이메일 인증 경고창-->
+	<style>
+	.alert {
+		margin-bottom: 0 !important;
+	}
+	.masthead {
+		position: relative;
+		width: 100%;
+		height: 100vh;
+		overflow: hidden;
+		background: rgba(0, 0, 0, 0.2) !important;
+	}
+	/*배경 동영상을 masthead 전체에 겹쳐서 설정 */
+	.video-background {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: -1; /* 텍스트보다 뒤로 배치 */
+		overflow: hidden;
+	}
+	/*동영상 크기를 화면에 맞춤 */
+	.video-background iframe {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 100vw;
+		height: 56.25vw; /* 16:9 비율 유지 */
+		min-height: 100vh;
+		min-width: 177.77vh; /* 16:9 비율 유지 */
+		transform: translate(-50%, -50%);
+		pointer-events: none; /* 클릭 방지 */
+	}
+	/*기존 텍스트 스타일 유지 */
+	.masthead .container {
+		position: relative;
+		z-index: 2; /* 동영상보다 위에 위치 */
+	}
+</style>
+</head>
+
+<body>
+<div th:insert="~{fragment/header :: header}"></div>
+
+<!--이메일 인증 경고창-->
+<div class="alert alert-warning" role="alert" th:if="${user != null && !user.emailVerified}">
+	가입을 완료하려면 <a href="#" th:href="@{/check-email-login}" class="alert-link">계정 인증 이메일을 확인</a>하세요.
+</div>
+
+<!-- head-->
+<div class="masthead">
+	<!-- 배경 동영상 -->
+	<div class="video-background">
+		<iframe src="https://player.vimeo.com/video/666704799?autoplay=1&loop=1&muted=1&background=1"
+				frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen>
+		</iframe>
+	</div>
+
+	<div class="container px-4 px-lg-5 h-100">
+    	<div class="row gx-4 gx-lg-5 h-100 align-items-center justify-content-center text-center">
+        	<div class="col-lg-8 align-self-end">
+            	<h1 class="text-white font-weight-bold">HAPPY SHOP</h1>
+                 <hr class="divider" />
+            </div>
+
+			<div class="col-lg-8 align-self-baseline">
+         		<p class="text-white-75">반려동물을 위한 행복한 쇼핑 공간!</p>
+         		<p class="text-white-75">Happy Shop과 함께 반려동물의 하루를 더 행복하게 만들어 보세요.</p>
+         		<br><br>
+         		<a class="btn btn-color btn-xl" href="#product">Find Out More</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- 상품목록 -->
+<section id="product">
+
+<!-- 신상품 -->
+<div class="mb-5">
+	<div class="info-text">  
+    	<p class="fw-bold">새로 나왔어요,
+      		<span class="fs-4 text-color">신상품!</span>
+      		<span class="find-more">
+      			<a href="/product/home/list?sort=new">더보기</a>
+      		</span>
+    	</p>
+    </div>	
+
+	<div class="multiple-items">
+        <div class="slick-list" th:each="product : ${newProducts}">
+          <a th:href="@{/product/{id}(id=${product.id})}">
+          	<img th:src="@{${product.reqImage}}" class="img-fluid rounded">
+          </a>
+         
+          <div class="product-info">
+            <p class="fw-bold" th:text="${product.title}"></p>
+            <p class="text-muted price" th:attr="data-price=${product.price}"></p>
+          </div>
+		</div>
+	</div>
+</div>
+
+
+<!-- 인기상품 -->
+<div class="mb-5">
+	<div class="info-text">  
+    	<p class="fw-bold">지금 해피샵,
+      		<span class="fs-4 text-color">인기 상품!</span>
+      		<span class="find-more">
+      			<!-- <a th:href="@{/product/home/list(sort=${sort-popular})}">더보기</a> -->
+      			<a href="/product/home/list?sort=popular">더보기</a>
+      		</span>
+    	</p>
+    </div>	
+
+	<div class="multiple-items">
+        <div class="slick-list" th:each="product : ${popularProducts}">
+          	<a th:href="@{/product/{id}(id=${product.id})}">
+          		<img th:src="@{${product.reqImage}}" class="img-fluid rounded">
+          	</a>
+          		
+          	<div class="product-info">
+          		<p class="mt-2 fw-bold" th:text="${product.title}"></p>
+          		<p class="text-muted price" th:attr="data-price=${product.price}"></p>
+          	</div>
+		</div>
+	</div>
+</div>
+
+</section>
+
+<div th:insert="~{fragment/footer :: footer}"></div>
+
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('.multiple-items').slick({
+            infinite: true,
+            slidesToShow: 4,
+            slidesToScroll: 1,
+            adaptiveHeight: true,
+            prevArrow: '<button type="button" class="slick-prev"><img src="/img/bone.png" alt="이전"></button>',
+            nextArrow: '<button type="button" class="slick-next"><img src="/img/bone.png" alt="다음"></button>',
+        });
+    });
+    
+    // 가격에 콤마 붙이기
+    document.addEventListener('DOMContentLoaded', () => {
+        const priceElements = document.querySelectorAll('.price');
+
+        priceElements.forEach(element => {
+            const price = parseFloat(element.getAttribute('data-price'));
+            
+            if (!isNaN(price)) {
+                // 세 자리마다 콤마 추가 및 '원' 단위 붙이기
+                element.textContent = price.toLocaleString('ko-KR') + '원';
+            } 
+        });
+    });
+    
+    
+</script>
+
+
+</body>
+</html>

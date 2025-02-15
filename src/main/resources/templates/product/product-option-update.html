@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    
+    h3, h4 {
+        text-align: center;
+    }
+    
+    form {
+        width: 100%;
+        margin: 0 auto;
+    }
+    
+   .modal-hr {
+        border: none;
+        border-top: 3px solid #ccc;
+        width: 70%; 
+        margin: 20px auto;
+   		margin-bottom:20px;
+    }
+    
+    .option-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px; /* 요소 간 간격 */
+        margin-bottom: 10px;
+        flex-wrap: nowrap; /* 한 줄에 출력되도록 설정 */
+    }
+       
+    .option-row button {
+        flex: 0 0 auto;
+    }
+    
+    label {
+        font-weight: bold;
+    }
+    
+    button {
+        background-color: #333;
+        color: white;
+        border: none;
+        cursor: pointer;
+        padding: 5px 10px;
+    }
+    
+    button:hover {
+        background-color: #555;
+    }
+    
+    .modal-hr {
+        border: none;
+        border-top: 3px solid #ccc;
+        width: 40%; 
+        margin: 20px auto; 
+        padding-bottom: 20px;
+    }
+    
+   .btn-outline-dark {
+        background-color: #f0f0f0; 
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 14px; 
+        cursor: pointer;
+    }
+
+    .btn-outline-dark:hover {
+        background-color: #e0e0e0; 
+    }
+    
+    .modal-btn {
+        display: block;
+        margin: 40px auto;
+        width: auto;
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+
+	.placeholder {
+    	flex: 0 0 auto; /* 삭제 버튼과 동일한 공간 차지 */
+    	visibility: hidden; 
+    	
+	}
+    
+    .option-list {
+    	width: 100%;
+    	margin-bottom: 30px;
+    }
+    
+    .hide {
+    	visibility: hidden;
+    }
+    
+    .option-group {
+	    display: flex;
+	    flex-direction: column;
+	    align-items: flex-start;
+	    gap: 8px;
+	    flex: 1;
+	}
+
+	input {
+	    width: 100%;
+	    padding: 8px;
+	    border: 1px solid #ccc;
+	    border-radius: 4px;
+	}
+
+	.text-danger {
+        font-size: 15px;
+        font-weight: bold;
+        color: red;
+	}
+
+</style>
+</head>
+<body>
+
+<div>
+    <h3>상품 옵션 수정</h3>
+    <h4>상품 ID: <span th:text="${productId}"></span></h4>
+    <hr class="modal-hr">
+    <button type="button" class="btn-outline-dark btn-sm" onclick="addOptionBtn()">옵션 추가</button>
+    <br><br>
+    
+    <form id="optionForm" th:action="@{/admin/option/update}" th:object="${requestOptionListDto}" method="post">
+        <input type="hidden" id="productId" name="productId" th:value="${productId}">
+		
+		<div class="mb-3 option-list">
+		
+		
+        <div id="optionInputs">
+            <div class="option-row d-flex align-items-center gap-3 mb-2" th:each="option, start : ${options}">
+	            <div class="option-group">
+	                <label th:for="'requestOptionDtos[' + ${start.index} + '].optionName'">옵션명</label>
+	                <input type="text" th:id="'requestOptionDtos[' +${start.index} + '].optionName'" class="form-control" th:name="'requestOptionDtos[' + ${start.index} + '].optionName'" th:value="${option.optionName}" placeholder="옵션명을 입력하세요" required>
+	                <!-- <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['options[0].optionName'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['options[0].optionName'] != null ? fieldErrors['options[0].optionName'] : ''}"></div> -->	
+					<div class="text-danger hide">error message</div>
+				</div>	
+					
+				<div class="option-group">	
+	                <label th:for="'requestOptionDtos[' + ${start.index} + '].optionPrice'">옵션 가격</label>
+	                <input type="number" th:id="'requestOptionDtos[' + ${start.index}+ '].optionPrice'" class="form-control" th:name="'requestOptionDtos[' + ${start.index} + '].optionPrice'" th:value="${option.optionPrice}" placeholder="옵션 가격을 입력하세요" required>
+					<!-- <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['options[0].optionPrice'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['options[0].optionPrice'] != null ? fieldErrors['options[0].optionPrice'] : ''}"></div> -->	
+					<div class="text-danger hide">error message</div>	
+				</div>		
+						
+				<div class="option-group">		
+	                <label th:for="'requestOptionDtos[' + ${start.index} + '].optionCount'">옵션 수량</label>
+	                <input type="number" th:id="'requestOptionDtos[' + ${start.index} + '].optionCount'" class="form-control" th:name="'requestOptionDtos[' + ${start.index} + '].optionCount'" th:value="${option.optionCount}" placeholder="옵션 수량을 입력하세요" required>
+	                <!-- <div class="text-danger"  th:classappend="${fieldErrors != null && fieldErrors['options[0].optionCount'] != null} ? '' : 'hide'" th:text="${fieldErrors != null && fieldErrors['options[0].optionCount'] != null ? fieldErrors['options[0].optionCount'] : ''}"></div> -->
+	                <div class="text-danger hide">error message</div>
+	             </div>                   
+                <button type="button" class="btn btn-outline-danger btn-sm" th:if="${start.index > 0}" onclick="removeOptionBtn(this)">삭제</button>
+                <button th:if="${start.index == 0}"  class="placeholder btn btn-outline-danger btn-sm">삭제</button>
+            </div>
+        </div>
+        </div>
+
+        <button type="submit" class="btn btn-dark modal-btn">수정</button>
+    </form>
+</div> 
+
+    
+<script id="modalScript" type="text/javascript" th:inline="javascript">
+
+ 	var optionIndex = [[${#lists.size(options)}]];
+
+
+    // 새로운 옵션 추가
+    function addOptionBtn() {
+        const optionInputs = document.getElementById("optionInputs");
+        const newOptionRow = `
+            <div class="option-row d-flex align-items-center gap-3 mb-2">
+        		<div class="option-group">
+	                <label for="requestOptionDtos[${optionIndex}].optionName">옵션명</label>
+	                <input type="text" id="requestOptionDtos[${optionIndex}].optionName" class="form-control" name="requestOptionDtos[${optionIndex}].optionName" placeholder="옵션명을 입력하세요" required>
+	                <div class="text-danger hide">error message</div>
+                </div>
+                
+                <div class="option-group">
+                	<label for="requestOptionDtos[${optionIndex}].optionPrice">옵션 가격</label>
+                	<input type="number" id="requestOptionDtos[${optionIndex}].optionPrice" class="form-control" name="requestOptionDtos[${optionIndex}].optionPrice" placeholder="옵션 가격을 입력하세요" required>
+                	<div class="text-danger hide">error message</div>
+                </div>
+				
+                <div class="option-group">
+                	<label for="requestOptionDtos[${optionIndex}].optionCount">옵션 수량</label>
+                	<input type="number" id="requestOptionDtos[${optionIndex}].optionCount" class="form-control" name="requestOptionDtos[${optionIndex}].optionCount" placeholder="옵션 수량을 입력하세요" required>
+                	<div class="text-danger hide">error message</div>
+                </div>
+
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeOptionBtn(this)">삭제</button>
+            </div>`;
+        optionInputs.insertAdjacentHTML('beforeend', newOptionRow);
+        optionIndex++;
+    }
+
+    // 옵션 입력행 삭제
+    function removeOptionBtn(button) {
+        const row = button.closest('.option-row'); // class="option-row"인 가장 가까운 노드를 찾음
+        optionIndex--;
+        
+        row.remove();
+        updateOptionIndexes();  // 인덱스 재 정렬하기
+    }
+    
+    function updateOptionIndexes() {
+        const rows = document.querySelectorAll('.option-row');
+        rows.forEach((row, index) => {
+        	row.querySelector('[for$="optionName"]').htmlFor = `requestOptionDtos[${index}].optionName`;
+            row.querySelector('[name$="optionName"]').name = `requestOptionDtos[${index}].optionName`;
+            row.querySelector('[name$="optionName"]').id = `requestOptionDtos[${index}].optionName`;
+            
+            row.querySelector('[for$="optionPrice"]').htmlFor = `requestOptionDtos[${index}].optionPrice`;
+            row.querySelector('[name$="optionPrice"]').name = `requestOptionDtos[${index}].optionPrice`;
+            row.querySelector('[name$="optionPrice"]').id = `requestOptionDtos[${index}].optionPrice`;
+            
+            row.querySelector('[for$="optionCount"]').htmlFor = `requestOptionDtos[${index}].optionCount`;
+            row.querySelector('[name$="optionCount"]').name = `requestOptionDtos[${index}].optionCount`;
+            row.querySelector('[name$="optionCount"]').id = `requestOptionDtos[${index}].optionCount`;
+        });
+    }
+
+	// 선택된 카테고리id 가져오기
+	function getCategoryId() {
+		const SelectedSubCategory = document.getElementById("subCategory");
+		const selectedCategoryId = SelectedSubCategory.value;
+		
+		document.getElementById("categoryId").value = selectedCategoryId;
+	}
+	
+	// 필드 동적 유효성 검사
+	function validateField(evt, input) {
+
+	    const value = input.value.trim();
+	    const name = input.name;
+
+	    const errorDiv = input.nextElementSibling;
+
+	    if (name.includes('optionName')) {
+	        // 옵션명, 상품명, 설명 - 공백 검사
+	        if (value === '') {
+	        	input.value = input.value.substring(0, input.selectionStart - 1);
+	        	errorDiv.classList.remove('hide');
+	            errorDiv.innerText = '값을 입력해 주세요.';
+	            input.classList.add('is-invalid');
+	            
+	        } else {
+	        	errorDiv.classList.add('hide');
+	            errorDiv.innerText = 'error message';
+	            input.classList.remove('is-invalid');
+	        }
+	    } 
+	    else if (name.includes('optionPrice') || name.includes('optionCount')) {
+	        // 가격, 수량 - 0 또는 양수 검사
+	        if (!/^\d+$/.test(value) || parseInt(value) < 0) {
+
+	        	errorDiv.classList.remove('hide');
+	            errorDiv.innerText = '양수로 입력해 주세요.';
+	            input.classList.add('is-invalid');
+	        } else {
+	        	errorDiv.classList.add('hide');
+	            errorDiv.innerText = 'error message';
+	            input.classList.remove('is-invalid');
+	        }
+	    }
+	}
+
+	// input 입력 시 유효성 검사
+	document.addEventListener('input', (e) => {
+	    if (e.target.tagName === 'INPUT') {
+	        validateField(e, e.target);
+	    }
+	});	
+	
+    
+    
+    // 폼 전송
+    document.querySelector('#optionForm').addEventListener('submit', function (e) {
+		
+    	e.preventDefault();
+		
+        const form = e.target;
+        const formData = new FormData(form);
+		
+        fetch(form.action, {
+            method: form.method,
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                alert("수정이 완료되었습니다!");
+                window.location.href = "/admin/product";
+            } else {
+                alert("수정 중 오류가 발생했습니다.");
+            }
+        }).catch(error => {
+            console.error("전송 오류:", error);
+        });
+    });    
+    
+
+</script>
+
+</body>
+</html>

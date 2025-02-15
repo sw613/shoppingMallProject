@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAPPY SHOP</title>
+  <link rel="stylesheet" href="/cart/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div th:insert="~{fragment/header :: header}" style="margin:0 -20px"></div>
+
+
+<!--<div class="orderListArea">-->
+<!--  <h3>상품 추가하기 (임시)</h3>-->
+
+<!--  <div class="add-product-section">-->
+<!--    <label>상품명: <input type="text" id="product-name" placeholder="상품명을 입력하세요"></label>-->
+<!--    <label>가격: <input type="number" id="product-price" placeholder="가격 입력"></label>-->
+<!--    <label>이미지 URL: <input type="text" id="product-image" placeholder="이미지 URL"></label>-->
+<!--    <button onclick="addTemporaryProduct()">상품 추가</button>-->
+<!--  </div>-->
+<div class="cart-container">
+  <div class="cart-header">
+    <span><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></span>
+    <span>상품 이미지</span>
+    <span>상품</span>
+    <span>판매가</span>
+    <span>수량</span>
+    <span>합계</span>
+    <span>선택</span>
+  </div>
+  <div class="cart-body" id="cart-body">
+    <!-- 각 상품이 여기 추가 -->
+  </div>
+
+</div>
+
+<div class="summary-section">
+  <button id="delete-all" onclick="deleteAllItems()">전체삭제</button>
+  <button id="delete-selected" onclick="deleteSelectedItems()">선택삭제</button>
+  <span>
+    상품구매금액 <span id="total-price">0</span>원 +
+    배송비 <span id="delivery-fee">3,000</span>원 =
+    <strong>TOTAL <span id="grand-total">3,000</span>원</strong>
+  </span>
+</div>
+
+<div id="option-modal" style="display: none;">
+  <div class="modal-content">
+    <label for="option-select">옵션 선택:</label>
+    <select id="option-select">
+      <!-- 옵션이 동적으로 추가 -->
+    </select>
+    <button onclick="applyOption()">확인</button>
+    <button onclick="closeOptionModal()">취소</button>
+  </div>
+</div>
+
+<div id="cart">
+  <!-- 기존 코드 -->
+</div>
+<div id="total-container" style="margin-top: 20px;">
+  <table style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Roboto', sans-serif;">
+    <tr style="border-bottom: 1px solid #ccc; font-weight: bold; text-align: left;">
+      <!--      <th style="padding: 10px;">항목</th>-->
+      <!--      <th style="padding: 10px; text-align: right;">금액</th>-->
+    </tr>
+    <tr>
+      <td style="padding: 10px;">총 상품금액</td>
+      <td id="product-price" style="padding: 10px; text-align: right; font-size: 18px;">0원</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px;">총 배송비</td>
+      <td id="shipping-fee" style="padding: 10px; text-align: right; font-size: 18px;">+ 0원</td>
+    </tr>
+    <tr style="border-top: 1px solid #ccc; font-weight: bold;">
+      <td style="padding: 10px;">TOTAL</td>
+      <td id="total-price2" style="padding: 10px; text-align: right; font-size: 22px; color: #ff6f00;">= 0원</td>
+    </tr>
+  </table>
+
+  <div id="order-buttons" style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
+    <button id="order-all" style="margin: 0 10px; padding: 10px 20px; background-color: black; color: white; border: none; font-size: 16px; cursor: pointer;">전체상품주문</button>
+    <button id="order-selected" style="margin: 0 10px; padding: 10px 20px; background-color: black; color: white; border: none; font-size: 16px; cursor: pointer;">선택상품주문</button>
+  </div>
+</div>
+
+
+
+
+<script src="/cart/cart.js"></script>
+
+<div th:insert="~{fragment/footer :: footer}" style="margin:0 -20px"></div>
+
+
+</body>
+</html>

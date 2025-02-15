@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 페이지</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        section {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            border-radius: 4px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        input:focus, select:focus {
+            border-color: #007bff;
+            box-shadow: 0px 0px 4px rgba(0, 123, 255, 0.5);
+        }
+
+        #cart-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        #cart-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        #cart-list img {
+            width: 50px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .item-total {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #pay-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #pay-button:hover {
+            background-color: #218838;
+        }
+
+        .payment-method label {
+            margin-right: 15px;
+            font-weight: normal;
+        }
+        .readonly-field {
+            background-color: #f1f1f1;
+            color: #6c757d;
+            border: 1px solid #ddd;
+            cursor: not-allowed;
+        }
+
+        .readonly-field:focus {
+            outline: none;
+            border: 1px solid #ddd;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+<div th:insert="~{fragment/header :: header}"></div>
+<main class="container my-5">
+    <!-- 배송지 입력 -->
+    <section id="address-info">
+        <h2>배송지</h2>
+        <form id="address-form" class="p-3 border rounded bg-light">
+            <label for="address-select" class="form-label">기존 배송지 선택:</label>
+            <select id="address-select" class="form-select mb-3">
+                <option value="">배송지 선택</option>
+            </select>
+
+            <label for="recipient" class="form-label">받는 사람:</label>
+            <input type="text" id="recipient" name="recipient" class="form-control mb-3">
+
+            <label for="address" class="form-label">주소:</label>
+            <input type="text" id="address" name="address" class="form-control mb-3 readonly-field" readonly>
+
+            <label for="detailAddress" class="form-label">상세 주소:</label>
+            <input type="text" id="detailAddress" name="detailAddress" class="form-control mb-3 readonly-field" readonly>
+
+            <label for="phone" class="form-label">전화번호:</label>
+            <input type="text" id="phone" name="phone" class="form-control mb-3 readonly-field" readonly>
+
+            <label for="request" class="form-label">요청사항:</label>
+            <input type="text" id="request" name="request" class="form-control mb-3">
+        </form>
+
+    </section>
+
+    <!-- 장바구니 상품 정보 -->
+    <section id="cart-items">
+        <h2>주문 상품</h2>
+        <ul id="cart-list"></ul>
+        <p class="fw-bold">총 결제 금액: <span id="total-price" class="text-primary">0원</span></p>
+    </section>
+
+    <!-- 결제 수단 선택 -->
+    <section id="payment-method">
+        <h2>결제 수단</h2>
+        <div class="payment-method">
+            <label><input type="radio" name="paymentMethod" value="kakaopay"> 카카오페이</label>
+            <label><input type="radio" name="paymentMethod" value="card"> 카드결제</label>
+        </div>
+    </section>
+
+    <button id="pay-button">결제하기</button>
+    <script src="https://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+    <script src="https://cdn.iamport.kr/js/iamport.payment-1.1.5.js"></script>
+
+
+    <script>
+        let totalPrice = 0;
+        let totalCount = 0;
+
+        // 배송지 목록
+        async function loadAddressList() {
+            const addressSelect = document.getElementById("address-select");
+
+            try {
+                const response = await fetch("/address/list/dto?userId=0", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error("API 요청 실패:", response.status, response.statusText);
+                    alert("배송지 데이터를 가져오는 데 실패했습니다.");
+                    return;
+                }
+
+                const result = await response.json();
+                console.log("응답 데이터:", result);
+
+                const addresses = result.data;
+                if (!addresses || addresses.length === 0) {
+                    console.warn("주소 데이터가 없습니다.");
+                    alert("등록된 배송지가 없습니다.");
+                    alert("기본 배송지 설정 부탁드립니다.");
+                    window.location.href = "/my-page/address";
+                    return;
+                }
+
+                addressSelect.innerHTML = '<option value="">배송지 선택</option>';
+
+                addresses.forEach(address => {
+                    const option = document.createElement("option");
+                    option.value = address.id;
+                    option.textContent = `${address.recipient} - ${address.address}`;
+                    option.dataset.detailAddress = address.detailAddress || "";
+                    option.dataset.phone = address.phone || "";
+                    option.dataset.request = address.request || "";
+                    option.dataset.zipCode = address.zipCode || "";
+                    addressSelect.appendChild(option);
+                });
+
+                addressSelect.addEventListener("change", (e) => {
+                    const selectedOption = e.target.options[e.target.selectedIndex];
+                    if (selectedOption.value) {
+                        document.getElementById("recipient").value = selectedOption.textContent.split(" - ")[0];
+                        document.getElementById("address").value = selectedOption.textContent.split(" - ")[1];
+                        document.getElementById("detailAddress").value = selectedOption.dataset.detailAddress;
+                        document.getElementById("phone").value = selectedOption.dataset.phone;
+                        document.getElementById("request").value = selectedOption.dataset.request;
+                    } else {
+                        document.getElementById("recipient").value = "";
+                        document.getElementById("address").value = "";
+                        document.getElementById("detailAddress").value = "";
+                        document.getElementById("phone").value = "";
+                        document.getElementById("request").value = "";
+                    }
+                });
+            } catch (error) {
+                console.error("배송지 데이터를 불러오는 중 오류 발생:", error);
+                alert("배송지 데이터를 불러오는 중 오류가 발생했습니다.");
+            }
+        }
+
+
+        // 장바구니 데이터 로드
+        async function loadCartDataItems() {
+            const productsIds = JSON.parse(localStorage.getItem("productIds")) || [];
+
+            try {
+                const queryParams = productsIds.map(id => `optionIdList=${id.selectedOption.optionId}`).join("&");
+                console.log("json 받아올 시: " + queryParams);
+                const response = await fetch(`/api/option/products?${queryParams}`, {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!response.ok) throw new Error("네트워크 응답 실패");
+
+
+
+                const productList = await response.json();
+                console.log("상품리스트 api호출 후 데이터 " + JSON.stringify(productList));
+                return productList.map((product, index) => ({
+                    ...product,
+                    purchaseCount: productsIds[index]?.purchaseCounts || 1,
+                }));
+            } catch (error) {
+                console.error("장바구니 데이터 불러오기 실패:", error);
+                return [];
+            }
+        }
+
+        // 장바구니 렌더링
+        function renderCartItems(cartList) {
+            const cartContainer = document.getElementById("cart-list");
+            const totalPriceContainer = document.getElementById("total-price");
+
+            totalPrice = 0;
+            totalCount = 0;
+
+            cartContainer.innerHTML = "";
+
+            cartList.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.style.display = "flex";
+                li.style.alignItems = "center";
+                li.style.marginBottom = "10px";
+
+                li.innerHTML = `
+            <img src="${item.reqImage}" alt="${item.title}" style="width: 50px; margin-right: 10px;">
+            ${item.title} - ${item.price.toLocaleString()}원 - 남은 재고 ${item.count}개
+            <span type="number" style="width: 50px; margin-left: 10px;"> "${item.purchaseCount}"개 </span>
+            <span class="item-total" data-index="${index}">${(item.purchaseCount * item.price).toLocaleString()}원</span>
+        `;
+
+                cartContainer.appendChild(li);
+
+                totalPrice += item.purchaseCount * item.price;
+                totalCount += item.purchaseCount;
+            });
+
+            totalPrice = totalPrice>=30000 ? totalPrice : totalPrice+3000;
+            totalPriceContainer.textContent = totalPrice >= 30000
+                ? `${totalPrice.toLocaleString()}원`
+                : `${totalPrice.toLocaleString()}원 (배송비 3,000원)`;
+        }
+
+
+        async function loadGetCartItems() {
+            const storedProductIds = JSON.parse(localStorage.getItem("productIds")) || [];
+
+            const queryParams = storedProductIds.map(id => `optionIdList=${id.optionId}`).join("&");
+            console.log("쿼리 파라미터:", queryParams);
+            return storedProductIds.map(item => ({
+                optionId: item.selectedOption.optionId,
+                count: item.purchaseCounts
+            }));
+        }
+
+        function saveAddressInfo() {
+            const recipient = document.getElementById("recipient").value;
+            const address = document.getElementById("address").value;
+            const detailAddress = document.getElementById("detailAddress").value;
+            const phone = document.getElementById("phone").value;
+            const request = document.getElementById("request").value;
+
+            if (!recipient || !address || !phone) {
+                alert("배송지 정보를 모두 입력해주세요.");
+                return;
+            }
+
+            const addressInfo = {
+                recipient: recipient,
+                address: address + " " +detailAddress,
+                phone: phone,
+                request: request
+            };
+
+            console.log("저장될 주소 정보:", addressInfo);
+            localStorage.setItem("addressInfo", JSON.stringify(addressInfo));
+            console.log("로컬 스토리지 저장 완료");
+        }
+
+
+        // 결제 버튼
+        async function handlePayment() {
+            const recipient = document.getElementById("recipient").value.trim();
+            const address = document.getElementById("address").value.trim();
+            const detailAddress = document.getElementById("detailAddress").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+
+            if (!recipient || !address || !detailAddress || !phone) {
+                alert("배송지 정보를 모두 입력해주세요.");
+                return;
+            }
+
+            const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
+            if (!paymentMethodElement) {
+                alert("결제 방법을 선택해주세요.");
+                return;
+            }
+
+            const paymentMethod = paymentMethodElement.value;
+            const randomSuffix = Math.floor(Math.random() * 1000000);
+            const orderId = `${randomSuffix}`;
+            localStorage.setItem("orderId", orderId);
+
+            const productIds = JSON.parse(localStorage.getItem("productIds")) || [];
+            const requestData = {
+                orderId: orderId,
+                quantity: totalCount,
+                totalAmount: totalPrice,
+            };
+
+            saveAddressInfo();
+
+            if (paymentMethod === "kakaopay") {
+                try {
+                    const response = await fetch("/api/kakaopay/ready", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(requestData),
+                    });
+
+                    const data = await response.json();
+                    if (data && data.next_redirect_pc_url) {
+                        window.location.href = data.next_redirect_pc_url;
+                    } else {
+                        alert("결제 준비 실패");
+                    }
+                } catch (error) {
+                    console.error("결제 준비 중 오류 발생:", error);
+                }
+            } else if (paymentMethod === "card") {
+                const IMP = window.IMP;
+                IMP.init("imp86533020");
+
+                const addressInfo = JSON.parse(localStorage.getItem("addressInfo"));
+                IMP.request_pay({
+                    pg: "kicc.T5102001",
+                    pay_method: "card",
+                    merchant_uid: orderId,
+                    name: "테스트 상품",
+                    amount: totalPrice,
+                    buyer_name: addressInfo.recipient,
+                    buyer_tel: addressInfo.phone,
+                    buyer_addr: addressInfo.address,
+                    buyer_postcode: "123-456",
+                }, async function (rsp) {
+                    if (rsp.success) {
+                        alert("결제 성공");
+                        const orderProductDtoList = await loadGetCartItems();
+                        const requestOrderDto = {
+                            orderId: orderId,
+                            address: addressInfo.address,
+                            phone: addressInfo.phone,
+                            recipient: addressInfo.recipient,
+                            request: addressInfo.request,
+                            orderProductDtoList: orderProductDtoList,
+                            payMethod: "카드결제",
+                        };
+                        const requestCardPayDto = {
+                            rspUid: rsp.imp_uid,
+                            requestOrderDto: requestOrderDto
+                        };
+
+                        console.log(requestOrderDto);
+                        try {
+                            const verifyResponse = await fetch("/api/iamport/verify", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(requestCardPayDto),
+                            });
+                            console.log(verifyResponse);
+                            const verifyResult = await verifyResponse.json();
+                            console.log(verifyResult);
+                            if (verifyResult !== 0) {
+                                alert("결제 검증 완료");
+                                window.location.href = `https://elice-happy-shop.duckdns.org/view/payment/success?pg_token=00000&order_id=${verifyResult}`;
+                            } else {
+                                alert("결제 검증 실패");
+                            }
+                        } catch (error) {
+                            console.error("결제 검증 중 오류 발생:", error);
+                        }
+                    } else {
+                        alert("결제 실패: " + rsp.error_msg);
+                    }
+                });
+            } else {
+                alert("결제 방법을 선택해주세요.");
+            }
+        }
+
+
+        // 페이지 로드
+        window.onload = async () => {
+            await loadAddressList();
+            const cartData = await loadCartDataItems();
+            if (cartData) {
+                renderCartItems(cartData);
+            } else {
+                console.error("장바구니 데이터가 없습니다.");
+            }
+        };
+
+        // 결제 버튼
+        document.getElementById("pay-button").addEventListener("click", handlePayment);
+
+    </script>
+</main>
+<div th:insert="~{fragment/footer :: footer}"></div>
+</body>
+</html>

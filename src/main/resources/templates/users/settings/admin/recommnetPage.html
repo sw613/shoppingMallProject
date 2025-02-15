@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <script src="https://kit.fontawesome.com/4b7607ba59.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/common.css">
+
+    <style>
+        .box {
+            height: 100%;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: gray;
+        }
+
+        .form-control {
+            border: none !important;
+            border-bottom: 1px solid #ccc !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        .form-control:focus {
+            border-bottom: 1px solid black !important;
+            box-shadow: none !important;
+        }
+
+        .btn-dark {
+            display: inline-block;
+            text-align: center;
+            line-height: 1.5;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            background-color: black;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-dark:hover {
+            background-color: #333;
+        }
+
+        .btn-disabled {
+            background-color: #d3d3d3 !important;
+            color: #8c8c8c !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
+        .btn-save {
+            background-color: #ff5100 !important;
+            color: white !important;
+        }
+
+        form {
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        .alert {
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        hr {
+            border: none;
+            border-top: 5px solid black;
+            margin: 20px 0;
+            opacity: 1;
+        }
+
+        .container-fluid {
+            padding-top: 30px; /* 상단 여백 추가 */
+        }
+
+        body {
+            overflow-y: scroll; /* 수직 스크롤바 항상 표시 */
+        }
+
+        .main {
+            margin-bottom: 150px;
+        }
+
+        .hr-custom {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:insert="~{fragment/header :: header}"></div>
+
+<main class="main">
+    <div class="container-fluid">
+        <div class="row mt-5 justify-content-center">
+            <div class="col-2 box"></div>
+            <div class="col-8 box">
+                <h2>Q&A LIST</h2>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-2 box">
+                <div th:replace="fragment/sideNavAdmin.html :: sideNav (currentMenu='comment')"></div>
+            </div>
+            <div class="col-8 box">
+                <hr class="hr-custom">
+
+
+                <!-- Q&A 게시판 -->
+                <div class="container-fluid border-dark border-top border-bottom border-2">
+                    <!-- 헤더 -->
+                    <div class="row align-items-center border-bottom py-2 text-center">
+                        <div style="width: 10%;"><span>답변상태</span></div>
+                        <div style="width: 60%; text-align: left;"><span>제목</span></div>
+                        <div style="width: 15%;"><span>작성자</span></div>
+                        <div style="width: 15%;"><span>작성일</span></div>
+                    </div>
+
+                    <!-- 질문 및 답변 -->
+                    <div th:if="${comments.size()} == 0">
+                        <div class="d-flex align-items-center justify-content-center bg-body-secondary empty-data-back">
+                            <span>아직 작성된 문의가 없습니다.</span>
+                        </div>
+                    </div>
+                    <div class="row border-bottom" th:each="comment : ${comments}">
+                        <!-- 질문 -->
+                        <div class="w-100 row py-2 align-items-center">
+                            <div style="width: 10%; text-align: center;">
+                                <span th:text="${comment.recomment} == null ? '미답변' : '답변완료'">미답변</span>
+                            </div>
+                            <div style="width: 60%;">
+                                <button th:if="${comment.isSecret() == false or comment.userId == user.id or #authorization.expression('hasRole(''ADMIN'')')}"
+                                        class="col btn btn-light toggle-answer-btn w-100" type="button"
+                                        style="border: none; background: none;">
+                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; width: 100%;"
+                                              th:text=" ${comment.detail}">질문</span>
+                                </button>
+                                <!-- 비밀글 -->
+                                <span th:if="${comment.isSecret() and comment.userId != user.id and !#authorization.expression('hasRole(''ADMIN'')')}"
+                                      class="text-muted">
+                                        비밀글입니다.
+                                    </span>
+                                <!-- 문의 답글 작성, 답글 수정 버튼 -->
+                                <div class="col" sec:authorize="isAuthenticated()">
+
+                                    <button type="button"
+                                            id="show-recommentModal-btn"
+                                            class="custom-btn  custom-btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#recommentModal"
+                                            th:attr="data-comment-id=${comment.id}, data-product-id=${comment.productId}"
+                                            th:if="${comment.recomment == null}"
+                                            sec:authorize="hasRole('ROLE_ADMIN')">
+                                        답글 작성
+                                    </button>
+
+                                    <button type="button"
+                                            id="edit-recomment-button"
+                                            class="custom-btn  custom-btn-primary edit-recomment-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#recommentModal"
+                                            th:if="${comment.recomment} != null"
+                                            sec:authorize="hasRole('ROLE_ADMIN')"
+                                            th:attr="data-comment-id=${comment.id}, data-product-id=${comment.productId}, data-recomment-id=${comment.recomment.id}, data-recomment-content=${comment.recomment.detail}">
+                                        답글 수정
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-center" style="width: 15%;"><span th:text="${comment.username}">닉네임</span>
+                            </div>
+                            <div class="text-center" style="width: 15%;"><span
+                                    th:text="${#temporals.format(comment.atCreate, 'yy-MM-dd')}">YY.MM.DD</span>
+                            </div>
+                        </div>
+
+                        <!-- 답변 (숨김 처리) -->
+                        <div class="w-100 row answer-row" th:if="${comment.recomment} != null"
+                             style="display: none;">
+                            <!-- 답변 질문 -->
+                            <div class="row py-2">
+                                <div style="width: 10%;"><span></span></div>
+                                <div style="width: 90%;" class="border-top pt-2">
+                                    <span th:text="${comment.detail}" style="white-space: pre-line;">질문</span>
+                                </div>
+                            </div>
+                            <!-- 답변 내용 -->
+                            <div class="row py-2">
+                                <div style="width: 10%;"><span></span></div>
+                                <div style="width: 90%;" class="border-top pt-2">
+                                    <span th:text="${comment.recomment.detail}"
+                                          style="white-space: pre-line;">답변 내용</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q&A 페이지네이션 -->
+                <div class="pt-2 d-flex align-items-center justify-content-center">
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+                            <li class="page-item">
+                                <a class="page-link" href="#"
+                                   th:href="@{/comment/admin(commentPage=1)}"
+                                   aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item" th:each="page : ${#numbers.sequence(1,commentTotalPages, 1)}">
+                                <a class="page-link" th:text="${page}"
+                                   th:href="@{/comment/admin(commentPage=${page})}" href="#">1</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#"
+                                   th:href="@{/comment/admin(commentPage=${commentTotalPages})}"
+                                   aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <div>
+                    <!-- 답글 작성 모달창 -->
+                    <div class="modal fade" id="recommentModal" data-bs-backdrop="static" data-bs-keyboard="false"
+                         tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="recommentModalLabel">답변 작성</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="recommentForm">
+                                        <!-- productId -->
+                                        <input type="hidden" name="productId" id="recomment-productId">
+
+                                        <!-- commentId -->
+                                        <input type="hidden" name="commentId" id="recomment-commentId">
+
+                                        <!-- 답글 내용 -->
+                                        <label for="recomment-detail">답변 내용</label>
+                                        <textarea name="detail" id="recomment-detail" class="form-control" type="text"
+                                                  rows="8" cols="30" maxlength="255"
+                                                  placeholder="10글자 이상 입력해주세요."></textarea>
+
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소
+                                    </button>
+                                    <button type="button" class="custom-btn custom-btn-primary" id="submitRecomment"
+                                            disabled>
+                                        작성완료
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:insert="~{fragment/footer :: footer}"></div>
+
+
+<!-- Q&A 게시판 아코디언 -->
+<script>
+    // 답변 토글 기능 추가
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleAnswerBtns = document.querySelectorAll(".toggle-answer-btn");
+
+        toggleAnswerBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                // 버튼과 동일한 row에서 다음 형제 row(answer-row)를 찾음
+                const answerRow = btn.closest(".row").nextElementSibling;
+
+                // 답변 영역 표시/숨김 토글
+                if (answerRow.style.display === "none" || answerRow.style.display === "") {
+                    answerRow.style.display = "flex"; // 답변 영역 표시
+                } else {
+                    answerRow.style.display = "none"; // 답변 영역 숨김
+                }
+            });
+        });
+    });
+</script>
+
+<!-- Q&A 데이터 검증 -->
+<script>
+    // 답변 검증
+    document.addEventListener("DOMContentLoaded", function () {
+        const recommentInput = document.getElementById("recomment-detail");
+        const submitButton = document.getElementById("submitRecomment");
+
+        // 코멘트 내용 검증 함수
+        function isRecommentValid() {
+            const recommentText = recommentInput.value.trim();
+            return recommentText.length >= 10;  // 최소 10글자
+        }
+
+        recommentInput.addEventListener("input", function () {
+            submitButton.disabled = !isRecommentValid();
+        });
+    });
+</script>
+
+<!-- 답변 모달 폼 데이터 제출 -->
+<script>
+    // 답변
+    document.addEventListener('DOMContentLoaded', function () {
+        // 답변 수정 버튼 클릭 시
+        document.querySelectorAll('.edit-recomment-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const recommentId = this.getAttribute('data-recomment-id');  // 클릭된 버튼에서 recommentId 가져오기
+                const commentId = this.getAttribute('data-comment-id');  // 클릭된 버튼에서 commentId 가져오기
+                const productId = this.getAttribute('data-product-id');  // 상품 ID
+                const recommentContent = this.getAttribute('data-recomment-content');  // 답변 내용
+
+                // 수정 모드로 설정
+                const isEditMode = true;
+                document.getElementById('recommentForm').reset();  // 폼 초기화
+                document.getElementById('recomment-productId').value = productId;
+                document.getElementById('recomment-commentId').value = commentId;
+                document.getElementById('recomment-detail').value = recommentContent;
+
+                document.getElementById('submitRecomment').disabled = true;
+                document.getElementById('submitRecomment').onclick = function () {
+                    submitRecomment(recommentId, isEditMode);
+                };
+            });
+        });
+
+        // 답변 작성하기 버튼 클릭 시
+        const writeRecommentButton = document.getElementById('show-recommentModal-btn');
+        if (writeRecommentButton) {
+            writeRecommentButton.addEventListener('click', function () {
+                // 답변 작성 폼 초기화
+                document.getElementById('recommentForm').reset();
+                document.getElementById('recomment-productId').value = this.getAttribute('data-product-id');
+                document.getElementById('recomment-commentId').value = this.getAttribute('data-comment-id');
+                document.getElementById('recomment-detail').value = '';
+                document.getElementById('submitRecomment').disabled = true;
+                document.getElementById('submitRecomment').onclick = function () {
+                    submitRecomment(null, false);  // 새 답변 작성 모드
+                };
+            });
+        }
+    });
+
+    // 답변 제출 함수
+    function submitRecomment(recommentId, isEditMode) {
+        const form = document.getElementById('recommentForm');
+        const formData = new FormData(form);
+        const url = isEditMode ? '/recomment/update/' + recommentId : '/recomment/create';
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => {
+                if (response.ok) {
+                    alert(isEditMode ? '답변이 성공적으로 수정되었습니다!' : '답변이 성공적으로 작성되었습니다!');
+                    window.location.reload();
+                } else {
+                    throw new Error('서버 응답 실패');
+                }
+            })
+            .catch(error => {
+                alert(isEditMode ? '답변 수정 중 오류가 발생했습니다.' : '답변 작성 중 오류가 발생했습니다.');
+            });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

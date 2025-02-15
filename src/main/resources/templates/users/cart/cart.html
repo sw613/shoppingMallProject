@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="/cart/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div th:insert="~{fragment/header :: header}"></div>
+
+
+<!--<div class="orderListArea">-->
+<!--  <h3>상품 추가하기 (임시)</h3>-->
+
+<!--  <div class="add-product-section">-->
+<!--    <label>상품명: <input type="text" id="product-name" placeholder="상품명을 입력하세요"></label>-->
+<!--    <label>가격: <input type="number" id="product-price" placeholder="가격 입력"></label>-->
+<!--    <label>이미지 URL: <input type="text" id="product-image" placeholder="이미지 URL"></label>-->
+<!--    <button onclick="addTemporaryProduct()">상품 추가</button>-->
+<!--  </div>-->
+<div class="cart-container">
+    <div class="cart-header">
+        <span><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></span>
+        <span>상품 이미지</span>
+        <span>상품</span>
+        <span>판매가</span>
+        <span>수량</span>
+        <span>합계</span>
+        <span>선택</span>
+    </div>
+    <div class="cart-body" id="cart-body">
+        <!-- 각 상품이 여기 추가 -->
+    </div>
+</div>
+
+<div class="summary-section">
+    <p>
+        상품구매금액 <span id="total-price">0</span>원 +
+        배송비 <span id="delivery-fee">3,000</span>원 =
+        <strong>TOTAL <span id="grand-total">3,000</span>원</strong>
+    </p>
+    <button id="delete-all" onclick="deleteAllItems()">전체삭제</button> <!-- 전체삭제 버튼 추가 -->
+</div>
+
+
+<script src="/cart/cart.js"></script>
+
+<div th:insert="~{fragment/footer :: footer}"></div>
+
+
+</body>
+</html>

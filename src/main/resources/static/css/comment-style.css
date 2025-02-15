@@ -1,0 +1,17 @@
+
+.empty-data-back {
+    width: 100%;
+    height: 200px;
+}
+
+.empty-data-back >span {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: #666;
+    text-decoration: none;
+}
+
+.product-detail-font {
+    color: #ff5100;
+    font-weight: 600;
+}
