@@ -57,15 +57,15 @@ public class ProductApiController {
 	// 상품 등록
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "상품 추가", description = "새로운 상품 생성")
-	public ResponseEntity<ResponseProductDto> createProduct(@ModelAttribute RequestProductDto requestDto, 
+	public ResponseEntity<ResponseProductDto> createProduct(@ModelAttribute RequestProductFullDto requestProductFullDto, 
 															@RequestParam Long categoryId,
 															@CurrentUser Users users) throws IOException {		
 		
-		if(requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
-			productService.uploadFile(requestDto, requestDto.getFile());
-		}
-		
-		ResponseProductDto addProduct = productService.addProduct(requestDto, categoryId, users);
+		RequestProductDto requestProductDto =  requestProductFullDto.getProduct();
+		RequestProductImgDto requestProductImgDtos = requestProductFullDto.getProductImages();
+		List<RequestOptionDto> requestOptionDtos = requestProductFullDto.getOptions();
+
+		ResponseProductDto addProduct = productService.addProduct(requestProductDto, categoryId, users, requestProductImgDtos, requestOptionDtos);
 
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(addProduct);
